@@ -363,6 +363,27 @@
           <option value="obese2">Obese Class II (35+)</option>
           <option value="underweight">Underweight (under 18.5)</option>
         </select>
+        <button type="button" class="btn btn-secondary" onclick="toggleBMICalculator()" style="margin-top: 0.5rem; font-size: 0.875rem; padding: 0.4rem;">Calculate my BMI</button>
+        <div id="bmiCalculator" class="hidden" style="margin-top: 0.75rem; padding: 0.75rem; background: rgba(0,0,0,0.03); border-radius: 0.5rem;">
+          <div style="margin-bottom: 0.5rem;">
+            <label style="font-size: 0.75rem;">Height</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="number" id="heightFt" placeholder="Feet" style="width: 50%;" min="3" max="8" />
+              <input type="number" id="heightIn" placeholder="Inches" style="width: 50%;" min="0" max="11" />
+            </div>
+            <div style="margin-top: 0.25rem; font-size: 0.7rem; color: #6b7280;">Or in cm: <input type="number" id="heightCm" placeholder="170" style="width: 5rem; padding: 0.25rem;" /></div>
+          </div>
+          <div style="margin-bottom: 0.5rem;">
+            <label style="font-size: 0.75rem;">Weight</label>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <input type="number" id="weightLbs" placeholder="Pounds" style="width: 50%;" />
+              <span style="font-size: 0.75rem; color: #6b7280;">or</span>
+              <input type="number" id="weightKg" placeholder="Kg" style="width: 50%;" />
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary" onclick="calculateBMI()" style="font-size: 0.875rem; padding: 0.4rem;">Calculate</button>
+          <div id="bmiResult" style="margin-top: 0.5rem; font-size: 0.75rem; color: #000;"></div>
+        </div>
       </div>
 
       <div class="input-group">
@@ -587,6 +608,62 @@
     function backStep() {
       document.getElementById('step1b').classList.add('hidden');
       document.getElementById('step1').classList.remove('hidden');
+    }
+
+    function toggleBMICalculator() {
+      var calc = document.getElementById('bmiCalculator');
+      if (calc.classList.contains('hidden')) {
+        calc.classList.remove('hidden');
+      } else {
+        calc.classList.add('hidden');
+      }
+    }
+
+    function calculateBMI() {
+      var heightCm = parseFloat(document.getElementById('heightCm').value);
+      var heightFt = parseFloat(document.getElementById('heightFt').value);
+      var heightIn = parseFloat(document.getElementById('heightIn').value);
+      var weightKg = parseFloat(document.getElementById('weightKg').value);
+      var weightLbs = parseFloat(document.getElementById('weightLbs').value);
+      
+      if (!heightCm && (heightFt || heightIn)) {
+        heightCm = ((heightFt || 0) * 12 + (heightIn || 0)) * 2.54;
+      }
+      
+      if (!weightKg && weightLbs) {
+        weightKg = weightLbs * 0.453592;
+      }
+      
+      if (!heightCm || !weightKg) {
+        alert('Please enter both height and weight');
+        return;
+      }
+      
+      var heightM = heightCm / 100;
+      var bmi = weightKg / (heightM * heightM);
+      var bmiRounded = bmi.toFixed(1);
+      
+      var category = '';
+      var selectValue = '';
+      if (bmi < 18.5) {
+        category = 'Underweight';
+        selectValue = 'underweight';
+      } else if (bmi < 25) {
+        category = 'Normal weight';
+        selectValue = 'normal';
+      } else if (bmi < 30) {
+        category = 'Overweight';
+        selectValue = 'overweight';
+      } else if (bmi < 35) {
+        category = 'Obese Class I';
+        selectValue = 'obese1';
+      } else {
+        category = 'Obese Class II';
+        selectValue = 'obese2';
+      }
+      
+      document.getElementById('bmiResult').innerHTML = '<strong>Your BMI: ' + bmiRounded + '</strong><br>Category: ' + category;
+      document.getElementById('bmi').value = selectValue;
     }
 
     function calculateStats(birthdate, lifespan) {
