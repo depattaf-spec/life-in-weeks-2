@@ -460,7 +460,6 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
   <script>
     var stats = null;
     var timerInterval = null;
@@ -756,4 +755,115 @@
       html += '<div class="card">';
       html += '<h2>Societal context</h2>';
       html += '<p class="stat-text">During your lifetime, humanity\'s population has grown from <span class="stat-highlight">' + formatNumber(getPopulationAtYear(stats.birthYear)) + '</span> to over <span class="stat-highlight">8 billion</span> people.</p>';
-      html += '<p class="stat-text">The average person will meet around <span class="stat-highlight">80,000</span> people in their lifetime. You\'ve likely already met approximately <span class="stat-highlight
+      html += '<p class="stat-text">The average person will meet around <span class="stat-highlight">80,000</span> people in their lifetime. You\'ve likely already met approximately <span class="stat-highlight">' + formatNumber(Math.round(80000 * (stats.percentageLived/100))) + '</span> individuals.</p>';
+      html += '<p class="stat-text">Since your birth, humanity has collectively experienced approximately <span class="stat-highlight">' + formatNumber(Math.round(stats.daysLived * 385000)) + '</span> births and <span class="stat-highlight">' + formatNumber(Math.round(stats.daysLived * 166000)) + '</span> deaths.</p>';
+      html += '</div>';
+      
+      html += '<div class="card">';
+      html += '<h2>Cosmic perspective</h2>';
+      html += '<p class="stat-text">Since your birth, Earth has traveled approximately <span class="stat-highlight">' + formatNumber(Math.round(stats.daysLived * 1.6 * 1000000)) + '</span> kilometers through space around the Sun.</p>';
+      html += '<p class="stat-text">The observable universe is about <span class="stat-highlight">93 billion</span> light-years across, meaning light takes <span class="stat-highlight">93 billion</span> years to cross it. Your entire lifespan is just <span class="stat-highlight">' + (stats.lifespan/13800000000 * 100).toFixed(10) + '%</span> of the universe\'s age.</p>';
+      html += '<p class="stat-text">During your lifetime, our solar system has moved about <span class="stat-highlight">' + formatNumber(Math.round(stats.daysLived * 24 * 828000)) + '</span> kilometers through the Milky Way galaxy.</p>';
+      html += '</div>';
+      
+      html += '<div class="card">';
+      html += '<h2>Natural world</h2>';
+      html += '<p class="stat-text">You\'ve experienced approximately <span class="stat-highlight">' + formatNumber(Math.round(stats.daysLived / 29.53)) + '</span> lunar cycles and <span class="stat-highlight">' + formatNumber(Math.floor(stats.daysLived / 365.25)) + '</span> trips around the Sun.</p>';
+      html += '<p class="stat-text">A giant sequoia tree can live over 3,000 years. Your current age is <span class="stat-highlight">' + ((stats.daysLived / 365.25) / 3000 * 100).toFixed(2) + '%</span> of its potential lifespan.</p>';
+      html += '<p class="stat-text">During your lifetime, your body has replaced most of its cells several times. You are not made of the same atoms you were born with.</p>';
+      html += '</div>';
+      
+      container.innerHTML = html;
+      
+      startLiveTimer();
+    }
+
+    function exportAsImage() {
+      var gridCard = document.querySelector('#step2 .card');
+      
+      html2canvas(gridCard, {
+        backgroundColor: '#f9fafb',
+        scale: 2
+      }).then(function(canvas) {
+        var link = document.createElement('a');
+        link.download = 'life-in-weeks.png';
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    }
+
+    function exportAsPDF() {
+      var gridCard = document.querySelector('#step2 .card');
+      
+      html2canvas(gridCard, {
+        backgroundColor: '#f9fafb',
+        scale: 2
+      }).then(function(canvas) {
+        var imgData = canvas.toDataURL('image/png');
+        var pdf = new jspdf.jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+        
+        var imgWidth = 190;
+        var imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+        pdf.save('life-in-weeks.pdf');
+      });
+    }
+
+    function calculateAndVisualize() {
+      var birthdate = document.getElementById('birthdate').value;
+      if (!birthdate) {
+        alert('Please enter your birthdate');
+        return;
+      }
+      
+      var calculatedLifespan = calculateLifespan();
+      customLifespan = calculatedLifespan;
+      
+      var healthData = {
+        gender: document.getElementById('gender').value,
+        smoking: document.getElementById('smoking').value,
+        exercise: document.getElementById('exercise').value,
+        bmi: document.getElementById('bmi').value,
+        diabetes: document.getElementById('diabetes').value,
+        heartDisease: document.getElementById('heartDisease').value,
+        cancer: document.getElementById('cancer').value,
+        grandparents: document.getElementById('grandparents').value,
+        education: document.getElementById('education').value,
+        alcohol: document.getElementById('alcohol').value
+      };
+      
+      saveToLocalStorage(birthdate, healthData);
+      
+      stats = calculateStats(birthdate, calculatedLifespan);
+      
+      document.getElementById('step1b').classList.add('hidden');
+      document.getElementById('step2').classList.remove('hidden');
+      
+      renderWeekGrid();
+      renderStats();
+    }
+
+    function reset() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+      }
+      
+      document.getElementById('birthdate').value = '';
+      stats = null;
+      
+      document.getElementById('step1').classList.remove('hidden');
+      document.getElementById('step1b').classList.add('hidden');
+      document.getElementById('step2').classList.add('hidden');
+    }
+
+    window.onload = function() {
+      loadFromLocalStorage();
+    };
+  </script>
+</body>
+</html>
