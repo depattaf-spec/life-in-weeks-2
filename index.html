@@ -130,27 +130,38 @@
       margin-top: 1rem;
       align-items: center;
       overflow: hidden;
+      max-width: 100%;
     }
 
     .week-row {
       display: flex;
       flex-wrap: nowrap;
+      justify-content: center;
     }
 
     .week-cell {
-      width: 3px;
-      height: 3px;
-      margin: 1px;
+      width: 4px;
+      height: 4px;
+      margin: 1.5px;
       border-radius: 50%;
       transition: all 0.3s;
+      flex-shrink: 0;
     }
 
     @media (min-width: 640px) {
       .week-cell {
-        width: 0.5rem;
-        height: 0.5rem;
-        margin: 0.125rem;
-        border-radius: 0.125rem;
+        width: 6px;
+        height: 6px;
+        margin: 2px;
+        border-radius: 1px;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .week-cell {
+        width: 8px;
+        height: 8px;
+        margin: 2.5px;
       }
     }
 
@@ -164,9 +175,14 @@
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
     }
 
+    .week-milestone {
+      background: #ef4444;
+      box-shadow: 0 0 4px rgba(239, 68, 68, 0.6);
+    }
+
     .week-future {
-      background: #f3f4f6;
-      border: 0.5px solid #e5e7eb;
+      background: #d1d5db;
+      border: 0.5px solid #9ca3af;
     }
 
     @keyframes pulse {
@@ -459,11 +475,32 @@
             <div class="legend-box week-future"></div>
             <span class="legend-text">Future</span>
           </div>
+          <div class="legend-item">
+            <div class="legend-box week-milestone"></div>
+            <span class="legend-text">Important</span>
+          </div>
         </div>
         <button class="btn btn-secondary" onclick="refreshStats()" style="margin-top: 1rem; font-size: 0.875rem;">Refresh Stats</button>
+        <button class="btn btn-secondary" onclick="showMilestoneModal()" style="margin-top: 0.5rem; font-size: 0.875rem;">Add Important Date</button>
       </div>
 
       <div id="statsContainer" class="stats-section"></div>
+
+      <div id="milestoneModal" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+        <div class="card" style="max-width: 24rem; margin: 1rem;">
+          <h2>Add Important Date</h2>
+          <div class="input-group">
+            <label for="milestoneDate">Date</label>
+            <input type="date" id="milestoneDate" />
+          </div>
+          <div class="input-group">
+            <label for="milestoneLabel">Label (optional)</label>
+            <input type="text" id="milestoneLabel" placeholder="Graduation, Wedding, etc." style="padding: 0.5rem; border: 1px solid #e5e7eb; border-radius: 0.5rem; background: rgba(255, 255, 255, 0.5); width: 100%;" />
+          </div>
+          <button class="btn btn-primary" onclick="addMilestone()">Add</button>
+          <button class="btn btn-secondary" onclick="closeMilestoneModal()" style="margin-top: 0.5rem;">Cancel</button>
+        </div>
+      </div>
 
       <button class="btn btn-secondary" onclick="reset()">Start over</button>
     </div>
@@ -474,6 +511,7 @@
     var stats = null;
     var timerInterval = null;
     var customLifespan = 90;
+    var milestones = [];
 
     function formatNumber(num) {
       return new Intl.NumberFormat().format(num);
@@ -498,6 +536,7 @@
         localStorage.setItem('lifeInWeeks_birthdate', birthdate);
         localStorage.setItem('lifeInWeeks_healthData', JSON.stringify(healthData));
         localStorage.setItem('lifeInWeeks_isVisualized', 'true');
+        localStorage.setItem('lifeInWeeks_milestones', JSON.stringify(milestones));
       } catch (e) {
         console.log('Could not save to localStorage');
       }
@@ -507,6 +546,11 @@
       try {
         var birthdate = localStorage.getItem('lifeInWeeks_birthdate');
         var healthData = localStorage.getItem('lifeInWeeks_healthData');
+        var savedMilestones = localStorage.getItem('lifeInWeeks_milestones');
+        
+        if (savedMilestones) {
+          milestones = JSON.parse(savedMilestones);
+        }
         
         if (birthdate) {
           document.getElementById('birthdate').value = birthdate;
@@ -714,6 +758,9 @@
       var grid = document.getElementById('weekGrid');
       grid.innerHTML = '';
       
+      var birthdate = document.getElementById('birthdate').value;
+      var birthDate = new Date(birthdate);
+      
       var weeksPerRow = 52;
       var totalRows = Math.ceil(stats.totalWeeks / weeksPerRow);
       
@@ -730,7 +777,29 @@
             var isPast = weekNumber < stats.weeksLived;
             var isCurrent = weekNumber === stats.weeksLived;
             
-            if (isPast) {
+            var weekDate = new Date(birthDate);
+            weekDate.setDate(weekDate.getDate() + (weekNumber * 7));
+            
+            var isMilestone = false;
+            var milestoneLabel = '';
+            for (var i = 0; i < milestones.length; i++) {
+              var m = milestones[i];
+              var mDate = new Date(m.date);
+              var weekStart = new Date(weekDate);
+              var weekEnd = new Date(weekDate);
+              weekEnd.setDate(weekEnd.getDate() + 6);
+              
+              if (mDate >= weekStart && mDate <= weekEnd) {
+                isMilestone = true;
+                milestoneLabel = m.label;
+                break;
+              }
+            }
+            
+            if (isMilestone) {
+              cell.classList.add('week-milestone');
+              cell.setAttribute('title', milestoneLabel);
+            } else if (isPast) {
               cell.classList.add('week-past');
             } else if (isCurrent) {
               cell.classList.add('week-current');
@@ -743,6 +812,9 @@
               showHoverInfo(parseInt(this.getAttribute('data-week')));
             });
             cell.addEventListener('mouseleave', hideHoverInfo);
+            cell.addEventListener('click', function() {
+              showHoverInfo(parseInt(this.getAttribute('data-week')));
+            });
             cell.addEventListener('touchstart', function(e) {
               e.preventDefault();
               showHoverInfo(parseInt(this.getAttribute('data-week')));
@@ -758,6 +830,12 @@
 
     function showHoverInfo(weekNumber) {
       var hoverInfo = document.getElementById('hoverInfo');
+      var birthdate = document.getElementById('birthdate').value;
+      var birthDate = new Date(birthdate);
+      
+      var weekDate = new Date(birthDate);
+      weekDate.setDate(weekDate.getDate() + (weekNumber * 7));
+      
       var text = 'Week ' + (weekNumber + 1) + ': ';
       
       if (weekNumber < stats.weeksLived) {
@@ -766,6 +844,19 @@
         text += 'Current';
       } else {
         text += 'Future';
+      }
+      
+      for (var i = 0; i < milestones.length; i++) {
+        var m = milestones[i];
+        var mDate = new Date(m.date);
+        var weekStart = new Date(weekDate);
+        var weekEnd = new Date(weekDate);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        
+        if (mDate >= weekStart && mDate <= weekEnd) {
+          text += ' - ' + m.label + ' (' + mDate.toLocaleDateString() + ')';
+          break;
+        }
       }
       
       hoverInfo.textContent = text;
@@ -899,6 +990,69 @@
       
       stats = calculateStats(birthdate, customLifespan);
       renderStats();
+    }
+
+    function showMilestoneModal() {
+      document.getElementById('milestoneModal').classList.remove('hidden');
+      document.getElementById('milestoneModal').style.display = 'flex';
+    }
+
+    function closeMilestoneModal() {
+      document.getElementById('milestoneModal').classList.add('hidden');
+      document.getElementById('milestoneModal').style.display = 'none';
+      document.getElementById('milestoneDate').value = '';
+      document.getElementById('milestoneLabel').value = '';
+    }
+
+    function addMilestone() {
+      var date = document.getElementById('milestoneDate').value;
+      var label = document.getElementById('milestoneLabel').value || 'Important Date';
+      
+      if (!date) {
+        alert('Please enter a date');
+        return;
+      }
+      
+      milestones.push({ date: date, label: label });
+      
+      var birthdate = document.getElementById('birthdate').value;
+      var healthData = {
+        gender: document.getElementById('gender').value,
+        smoking: document.getElementById('smoking').value,
+        exercise: document.getElementById('exercise').value,
+        bmi: document.getElementById('bmi').value,
+        diabetes: document.getElementById('diabetes').value,
+        heartDisease: document.getElementById('heartDisease').value,
+        cancer: document.getElementById('cancer').value,
+        grandparents: document.getElementById('grandparents').value,
+        education: document.getElementById('education').value,
+        alcohol: document.getElementById('alcohol').value
+      };
+      saveToLocalStorage(birthdate, healthData);
+      
+      renderWeekGrid();
+      closeMilestoneModal();
+    }
+
+    function removeMilestone(index) {
+      milestones.splice(index, 1);
+      
+      var birthdate = document.getElementById('birthdate').value;
+      var healthData = {
+        gender: document.getElementById('gender').value,
+        smoking: document.getElementById('smoking').value,
+        exercise: document.getElementById('exercise').value,
+        bmi: document.getElementById('bmi').value,
+        diabetes: document.getElementById('diabetes').value,
+        heartDisease: document.getElementById('heartDisease').value,
+        cancer: document.getElementById('cancer').value,
+        grandparents: document.getElementById('grandparents').value,
+        education: document.getElementById('education').value,
+        alcohol: document.getElementById('alcohol').value
+      };
+      saveToLocalStorage(birthdate, healthData);
+      
+      renderWeekGrid();
     }
 
     function calculateAndVisualize() {
