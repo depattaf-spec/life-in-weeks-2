@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Life in Weeks</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f9fafb;
+      min-height: 100vh;
+      padding: 6rem 1.5rem 1.5rem;
+    }
+
+    .container {
+      max-width: 28rem;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 300;
+      color: #000;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      font-weight: 300;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(12px);
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1.5rem;
+    }
+
+    h2 {
+      font-size: 1.125rem;
+      font-weight: 300;
+      color: #000;
+      margin-bottom: 1rem;
+    }
+
+    .input-group {
+      margin-bottom: 1rem;
+    }
+
+    input[type="date"] {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(4px);
+      color: #374151;
+      font-weight: 300;
+      font-size: 1rem;
+    }
+
+    input[type="date"]:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(156, 163, 175, 0.5);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 0.5rem;
+      border: none;
+      border-radius: 0.5rem;
+      font-weight: 300;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 1rem;
+    }
+
+    .btn-primary {
+      background: #000;
+      color: white;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #1f2937;
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(12px);
+      border: 1px solid #e5e7eb;
+      color: #000;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .week-grid {
+      display: flex;
+      flex-direction: column;
+      margin-top: 1rem;
+    }
+
+    .week-row {
+      display: flex;
+    }
+
+    .week-cell {
+      width: 0.5rem;
+      height: 0.5rem;
+      margin: 0.125rem;
+      border-radius: 0.125rem;
+      transition: all 0.3s;
+    }
+
+    .week-past {
+      background: #000;
+    }
+
+    .week-current {
+      background: #6b7280;
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    }
+
+    .week-future {
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .legend {
+      display: flex;
+      margin-top: 1.5rem;
+      font-size: 0.875rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-right: 1rem;
+    }
+
+    .legend-box {
+      width: 0.75rem;
+      height: 0.75rem;
+      border-radius: 0.125rem;
+      margin-right: 0.5rem;
+    }
+
+    .legend-text {
+      color: #6b7280;
+      font-weight: 300;
+    }
+
+    .hover-info {
+      margin-top: 1rem;
+      font-size: 0.875rem;
+      color: #6b7280;
+      font-weight: 300;
+      min-height: 1.5rem;
+    }
+
+    .stat-text {
+      color: #6b7280;
+      font-weight: 300;
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+
+    .stat-text:last-child {
+      margin-bottom: 0;
+    }
+
+    .stat-highlight {
+      color: #000;
+      font-weight: 500;
+    }
+
+    .stats-section {
+      margin-top: 2rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Life in weeks</h1>
+    <p class="subtitle">A simple visualization to reflect on the passage of time</p>
+
+    <div id="step1" class="card">
+      <h2>When were you born?</h2>
+      <div class="input-group">
+        <input type="date" id="birthdate" />
+      </div>
+      <button class="btn btn-primary" onclick="visualize()">Visualize your time</button>
+    </div>
+
+    <div id="step2" class="hidden">
+      <div class="card">
+        <h2>Your life in weeks</h2>
+        <div id="weekGrid" class="week-grid"></div>
+        <div id="hoverInfo" class="hover-info"></div>
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-box week-past"></div>
+            <span class="legend-text">Past</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-box week-current"></div>
+            <span class="legend-text">Present</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-box week-future"></div>
+            <span class="legend-text">Future</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="statsContainer" class="stats-section"></div>
+
+      <button class="btn btn-secondary" onclick="reset()">Start over</button>
+    </div>
+  </div>
+
+  <script>
+    var stats = null;
+
+    function formatNumber(num) {
+      return new Intl.NumberFormat().format(num);
+    }
+
+    function getPopulationAtYear(year) {
+      var populationData = {
+        1950: 2.5, 1960: 3.0, 1970: 3.7, 1980: 4.4,
+        1990: 5.3, 2000: 6.1, 2010: 6.9, 2020: 7.8, 2025: 8.1
+      };
+      
+      var years = Object.keys(populationData).map(Number);
+      var closestYear = years.reduce(function(prev, curr) {
+        return Math.abs(curr - year) < Math.abs(prev - year) ? curr : prev;
+      });
+      
+      return Math.round(populationData[closestYear] * 1000000000);
+    }
+
+    function calculateStats(birthdate) {
+      var birthDate = new Date(birthdate);
+      var today = new Date();
+      var birthYear = birthDate.getFullYear();
+      
+      var msInWeek = 1000 * 60 * 60 * 24 * 7;
+      var weeksLived = Math.floor((today - birthDate) / msInWeek);
+      
+      var totalWeeks = 4160;
+      var weeksRemaining = totalWeeks - weeksLived;
+      var percentageLived = Math.round((weeksLived / totalWeeks) * 100);
+      
+      var msInDay = 1000 * 60 * 60 * 24;
+      var daysLived = Math.floor((today - birthDate) / msInDay);
+      
+      var hoursSlept = Math.floor(daysLived * 8);
+      var heartbeats = Math.floor(daysLived * 24 * 60 * 70);
+      var breaths = Math.floor(daysLived * 24 * 60 * 16);
+      var seasons = Math.floor(daysLived / 91.25);
+      
+      return {
+        weeksLived: weeksLived,
+        totalWeeks: totalWeeks,
+        weeksRemaining: weeksRemaining,
+        percentageLived: percentageLived,
+        daysLived: daysLived,
+        hoursSlept: hoursSlept,
+        heartbeats: heartbeats,
+        breaths: breaths,
+        seasons: seasons,
+        birthYear: birthYear
+      };
+    }
+
+    function renderWeekGrid() {
+      var grid = document.getElementById('weekGrid');
+      grid.innerHTML = '';
+      
+      var weeksPerRow = 52;
+      var totalRows = Math.ceil(stats.totalWeeks / weeksPerRow);
+      
+      for (var row = 0; row < totalRows; row++) {
+        var rowDiv = document.createElement('div');
+        rowDiv.className = 'week-row';
+        
+        for (var col = 0; col < weeksPerRow; col++) {
+          var weekNumber = row * weeksPerRow + col;
+          if (weekNumber < stats.totalWeeks) {
+            var cell = document.createElement('div');
+            cell.className = 'week-cell';
+            
+            var isPast = weekNumber < stats.weeksLived;
+            var isCurrent = weekNumber === stats.weeksLived;
+            
+            if (isPast) {
+              cell.classList.add('week-past');
+            } else if (isCurrent) {
+              cell.classList.add('week-current');
+            } else {
+              cell.classList.add('week-future');
+            }
+            
+            cell.setAttribute('data-week', weekNumber);
+            cell.addEventListener('mouseenter', function() {
+              showHoverInfo(parseInt(this.getAttribute('data-week')));
+            });
+            cell.addEventListener('mouseleave', hideHoverInfo);
+            
+            rowDiv.appendChild(cell);
+          }
+        }
+        
+        grid.appendChild(rowDiv);
+      }
+    }
+
+    function showHoverInfo(weekNumber) {
+      var hoverInfo = document.getElementById('hoverInfo');
+      var text = 'Week ' + (weekNumber + 1) + ': ';
+      
+      if (weekNumber < stats.weeksLived) {
+        text += 'A week from your past';
+      } else if (weekNumber === stats.weeksLived) {
+        text += 'Your current week';
+      } else {
+        text += 'A week in your potential future';
+      }
+      
+      hoverInfo.textContent = text;
+    }
+
+    function hideHoverInfo() {
+      document.getElementById('hoverInfo').textContent = '';
+    }
+
+    function renderStats() {
+      var container = document.getElementById('statsContainer');
+      
+      var html = '<div class="card">';
+      html += '<h2>Life highlights</h2>';
+      html += '<p class="stat-text">You\'ve lived <span class="stat-highlight">' + formatNumber(stats.weeksLived) + '</span> weeks, which is <span class="stat-highlight">' + stats.percentageLived + '%</span> of a full life.</p>';
+      html += '<p class="stat-text">That\'s <span class="stat-highlight">' + formatNumber(stats.daysLived) + '</span> days of experience and approximately <span class="stat-highlight">' + formatNumber(stats.seasons) + '</span> seasons observed.</p>';
+      html += '<p class="stat-text">Your heart has beaten approximately <span class="stat-highlight">' + formatNumber(stats.heartbeats) + '</span> times.</p>';
+      html += '<p class="stat-text">You\'ve taken around <span class="stat-highlight">' + formatNumber(stats.breaths) + '</span> breaths and slept about <span class="stat-highlight">' + formatNumber(stats.hoursSlept) + '</span> hours.</p>';
+      html += '</div>';
+      
+      html += '<div class="card">';
+      html += '<h2>Societal context</h2>';
+      html += '<p class="stat-text">During your lifetime, humanity\'s population has grown from <span class="stat-highlight">' + formatNumber(getPopulationAtYear(stats.birthYear)) + '</span> to over <span class="stat-highlight">8 billion</span> people.</p>';
+      html += '<p class="stat-text">The average person will meet around <span class="stat-highlight">80,000</span> people in their lifetime. You\'ve likely already met approximately <span class="stat-highlight">' + formatNumber(Math.round(80000 * (stats.percentageLived/100))) + '</span> individuals.</p>';
+      html += '<p class="stat-text">Since your birth, humanity has collectively experienced approximately <span class="stat-highlight">' + formatNumber(Math.round(stats.daysLived * 385000)) + '</span> births and <span class="stat-highlight">' + formatNumber(Math.round(stats.daysLived * 166000)) + '</span> deaths.</p>';
+      html += '</div>';
+      
+      html += '<div class="card">';
+      html += '<h2>Cosmic perspective</h2>';
+      html += '<p class="stat-text">Since your birth, Earth has traveled approximately <span class="stat-highlight">' + formatNumber(Math.round(stats.daysLived * 1.6 * 1000000)) + '</span> kilometers through space around the Sun.</p>';
+      html += '<p class="stat-text">The observable universe is about <span class="stat-highlight">93 billion</span> light-years across, meaning light takes <span class="stat-highlight">93 billion</span> years to cross it. Your entire lifespan is just <span class="stat-highlight">' + (80/13800000000 * 100).toFixed(10) + '%</span> of the universe\'s age.</p>';
+      html += '<p class="stat-text">During your lifetime, our solar system has moved about <span class="stat-highlight">' + formatNumber(Math.round(stats.daysLived * 24 * 828000)) + '</span> kilometers through the Milky Way galaxy.</p>';
+      html += '</div>';
+      
+      html += '<div class="card">';
+      html += '<h2>Natural world</h2>';
+      html += '<p class="stat-text">You\'ve experienced approximately <span class="stat-highlight">' + formatNumber(Math.round(stats.daysLived / 29.53)) + '</span> lunar cycles and <span class="stat-highlight">' + formatNumber(Math.floor(stats.daysLived / 365.25)) + '</span> trips around the Sun.</p>';
+      html += '<p class="stat-text">A giant sequoia tree can live over 3,000 years. Your current age is <span class="stat-highlight">' + ((stats.daysLived / 365.25) / 3000 * 100).toFixed(2) + '%</span> of its potential lifespan.</p>';
+      html += '<p class="stat-text">During your lifetime, your body has replaced most of its cells several times. You are not made of the same atoms you were born with.</p>';
+      html += '</div>';
+      
+      container.innerHTML = html;
+    }
+
+    function visualize() {
+      var birthdate = document.getElementById('birthdate').value;
+      if (!birthdate) return;
+      
+      stats = calculateStats(birthdate);
+      
+      document.getElementById('step1').classList.add('hidden');
+      document.getElementById('step2').classList.remove('hidden');
+      
+      renderWeekGrid();
+      renderStats();
+    }
+
+    function reset() {
+      document.getElementById('birthdate').value = '';
+      stats = null;
+      
+      document.getElementById('step1').classList.remove('hidden');
+      document.getElementById('step2').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
