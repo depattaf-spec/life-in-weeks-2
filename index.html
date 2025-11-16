@@ -47,6 +47,7 @@
       border: 1px solid #e5e7eb;
       box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
       margin-bottom: 1.5rem;
+      overflow: hidden;
     }
 
     h2 {
@@ -128,10 +129,12 @@
       flex-direction: column;
       margin-top: 1rem;
       align-items: center;
+      overflow: hidden;
     }
 
     .week-row {
       display: flex;
+      flex-wrap: nowrap;
     }
 
     .week-cell {
@@ -682,6 +685,10 @@
       var minutesRemaining = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
       var secondsRemaining = Math.floor((timeRemaining % (1000 * 60)) / 1000);
       
+      var totalSecondsRemaining = Math.floor(timeRemaining / 1000);
+      var heartbeatsRemaining = Math.floor(totalSecondsRemaining * 70 / 60);
+      var breathsRemaining = Math.floor(totalSecondsRemaining * 16 / 60);
+      
       return {
         weeksLived: weeksLived,
         totalWeeks: totalWeeks,
@@ -697,6 +704,8 @@
         hoursRemaining: hoursRemaining,
         minutesRemaining: minutesRemaining,
         secondsRemaining: secondsRemaining,
+        heartbeatsRemaining: heartbeatsRemaining,
+        breathsRemaining: breathsRemaining,
         lifespan: lifespan
       };
     }
@@ -770,11 +779,51 @@
       var birthdate = document.getElementById('birthdate').value;
       if (!birthdate) return;
       
-      stats = calculateStats(birthdate, customLifespan);
+      var birthDate = new Date(birthdate);
+      var now = new Date();
+      
+      var averageDeathDate = new Date(birthDate);
+      averageDeathDate.setFullYear(averageDeathDate.getFullYear() + customLifespan);
+      
+      var timeRemaining = averageDeathDate - now;
+      var daysRemaining = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+      var hoursRemaining = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      var minutesRemaining = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+      var secondsRemaining = Math.floor((timeRemaining % (1000 * 60)) / 1000);
       
       var timerElement = document.getElementById('liveTimer');
       if (timerElement) {
-        timerElement.innerHTML = '<span class="stat-highlight">' + formatNumber(stats.daysRemaining) + '</span> days, <span class="stat-highlight">' + stats.hoursRemaining + '</span> hours, <span class="stat-highlight">' + stats.minutesRemaining + '</span> minutes, <span class="stat-highlight">' + stats.secondsRemaining + '</span> seconds';
+        timerElement.innerHTML = '<span class="stat-highlight">' + formatNumber(daysRemaining) + '</span> days, <span class="stat-highlight">' + hoursRemaining + '</span> hours, <span class="stat-highlight">' + minutesRemaining + '</span> minutes, <span class="stat-highlight">' + secondsRemaining + '</span> seconds';
+      }
+      
+      var msLived = now - birthDate;
+      var secondsLived = Math.floor(msLived / 1000);
+      
+      var currentHeartbeats = secondsLived * 70 / 60;
+      var currentBreaths = secondsLived * 16 / 60;
+      
+      var heartbeatElement = document.getElementById('liveHeartbeats');
+      if (heartbeatElement) {
+        heartbeatElement.textContent = formatNumber(Math.floor(currentHeartbeats));
+      }
+      
+      var breathElement = document.getElementById('liveBreaths');
+      if (breathElement) {
+        breathElement.textContent = formatNumber(Math.floor(currentBreaths));
+      }
+      
+      var totalSecondsRemaining = daysRemaining * 24 * 60 * 60 + hoursRemaining * 60 * 60 + minutesRemaining * 60 + secondsRemaining;
+      var heartbeatsLeft = Math.floor(totalSecondsRemaining * 70 / 60);
+      var breathsLeft = Math.floor(totalSecondsRemaining * 16 / 60);
+      
+      var heartbeatsRemainingElement = document.getElementById('liveHeartbeatsRemaining');
+      if (heartbeatsRemainingElement) {
+        heartbeatsRemainingElement.textContent = formatNumber(heartbeatsLeft);
+      }
+      
+      var breathsRemainingElement = document.getElementById('liveBreathsRemaining');
+      if (breathsRemainingElement) {
+        breathsRemainingElement.textContent = formatNumber(breathsLeft);
       }
     }
 
@@ -805,6 +854,8 @@
       html += '<h2>Time remaining</h2>';
       html += '<p class="stat-text">You have approximately:</p>';
       html += '<p class="stat-text timer-display" id="liveTimer"><span class="stat-highlight">' + formatNumber(stats.daysRemaining) + '</span> days, <span class="stat-highlight">' + stats.hoursRemaining + '</span> hours, <span class="stat-highlight">' + stats.minutesRemaining + '</span> minutes, <span class="stat-highlight">' + stats.secondsRemaining + '</span> seconds</p>';
+      html += '<p class="stat-text"><span class="stat-highlight" id="liveHeartbeatsRemaining">' + formatNumber(stats.heartbeatsRemaining) + '</span> heartbeats remaining.</p>';
+      html += '<p class="stat-text"><span class="stat-highlight" id="liveBreathsRemaining">' + formatNumber(stats.breathsRemaining) + '</span> breaths remaining.</p>';
       html += '<p class="stat-text">Make them count.</p>';
       html += '</div>';
       
@@ -812,8 +863,8 @@
       html += '<h2>Life highlights</h2>';
       html += '<p class="stat-text">You\'ve lived <span class="stat-highlight">' + formatNumber(stats.weeksLived) + '</span> weeks, which is <span class="stat-highlight">' + stats.percentageLived + '%</span> of your expected life.</p>';
       html += '<p class="stat-text">That\'s <span class="stat-highlight">' + formatNumber(stats.daysLived) + '</span> days of experience and approximately <span class="stat-highlight">' + formatNumber(stats.seasons) + '</span> seasons observed.</p>';
-      html += '<p class="stat-text">Your heart has beaten approximately <span class="stat-highlight">' + formatNumber(stats.heartbeats) + '</span> times.</p>';
-      html += '<p class="stat-text">You\'ve taken around <span class="stat-highlight">' + formatNumber(stats.breaths) + '</span> breaths and slept about <span class="stat-highlight">' + formatNumber(stats.hoursSlept) + '</span> hours.</p>';
+      html += '<p class="stat-text">Your heart has beaten approximately <span class="stat-highlight" id="liveHeartbeats">' + formatNumber(stats.heartbeats) + '</span> times.</p>';
+      html += '<p class="stat-text">You\'ve taken around <span class="stat-highlight" id="liveBreaths">' + formatNumber(stats.breaths) + '</span> breaths and slept about <span class="stat-highlight">' + formatNumber(stats.hoursSlept) + '</span> hours.</p>';
       html += '</div>';
       
       html += '<div class="card">';
