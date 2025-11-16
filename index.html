@@ -265,18 +265,6 @@
       display: none;
     }
 
-    .export-buttons {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.5rem;
-      margin-top: 1rem;
-    }
-
-    .btn-small {
-      padding: 0.4rem;
-      font-size: 0.875rem;
-    }
-
     .calculated-lifespan {
       background: rgba(0, 0, 0, 0.05);
       padding: 0.75rem;
@@ -467,10 +455,7 @@
             <span class="legend-text">Future</span>
           </div>
         </div>
-        <div class="export-buttons">
-          <button class="btn btn-secondary btn-small" onclick="exportAsImage()">Save as Image</button>
-          <button class="btn btn-secondary btn-small" onclick="exportAsPDF()">Save as PDF</button>
-        </div>
+        <button class="btn btn-secondary" onclick="refreshStats()" style="margin-top: 1rem; font-size: 0.875rem;">Refresh Stats</button>
       </div>
 
       <div id="statsContainer" class="stats-section"></div>
@@ -480,7 +465,6 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
     var stats = null;
     var timerInterval = null;
@@ -508,6 +492,7 @@
       try {
         localStorage.setItem('lifeInWeeks_birthdate', birthdate);
         localStorage.setItem('lifeInWeeks_healthData', JSON.stringify(healthData));
+        localStorage.setItem('lifeInWeeks_isVisualized', 'true');
       } catch (e) {
         console.log('Could not save to localStorage');
       }
@@ -855,40 +840,12 @@
       startLiveTimer();
     }
 
-    function exportAsImage() {
-      var gridCard = document.querySelector('#step2 .card');
+    function refreshStats() {
+      var birthdate = document.getElementById('birthdate').value;
+      if (!birthdate) return;
       
-      html2canvas(gridCard, {
-        backgroundColor: '#f9fafb',
-        scale: 2
-      }).then(function(canvas) {
-        var link = document.createElement('a');
-        link.download = 'life-in-weeks.png';
-        link.href = canvas.toDataURL();
-        link.click();
-      });
-    }
-
-    function exportAsPDF() {
-      var gridCard = document.querySelector('#step2 .card');
-      
-      html2canvas(gridCard, {
-        backgroundColor: '#f9fafb',
-        scale: 2
-      }).then(function(canvas) {
-        var imgData = canvas.toDataURL('image/png');
-        var pdf = new jspdf.jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: 'a4'
-        });
-        
-        var imgWidth = 190;
-        var imgHeight = (canvas.height * imgWidth) / canvas.width;
-        
-        pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-        pdf.save('life-in-weeks.pdf');
-      });
+      stats = calculateStats(birthdate, customLifespan);
+      renderStats();
     }
 
     function calculateAndVisualize() {
@@ -930,6 +887,12 @@
         clearInterval(timerInterval);
       }
       
+      try {
+        localStorage.removeItem('lifeInWeeks_isVisualized');
+      } catch (e) {
+        console.log('Could not clear localStorage');
+      }
+      
       document.getElementById('birthdate').value = '';
       stats = null;
       
@@ -940,6 +903,28 @@
 
     window.onload = function() {
       loadFromLocalStorage();
+      
+      try {
+        var isVisualized = localStorage.getItem('lifeInWeeks_isVisualized');
+        var birthdate = localStorage.getItem('lifeInWeeks_birthdate');
+        var healthData = localStorage.getItem('lifeInWeeks_healthData');
+        
+        if (isVisualized === 'true' && birthdate && healthData) {
+          var data = JSON.parse(healthData);
+          var calculatedLifespan = calculateLifespan();
+          customLifespan = calculatedLifespan;
+          stats = calculateStats(birthdate, calculatedLifespan);
+          
+          document.getElementById('step1').classList.add('hidden');
+          document.getElementById('step1b').classList.add('hidden');
+          document.getElementById('step2').classList.remove('hidden');
+          
+          renderWeekGrid();
+          renderStats();
+        }
+      } catch (e) {
+        console.log('Could not restore visualization state');
+      }
     };
   </script>
 </body>
