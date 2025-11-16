@@ -202,6 +202,11 @@
       font-weight: 500;
     }
 
+    .timer-display {
+      font-size: 1.125rem;
+      margin: 1.5rem 0;
+    }
+
     .stats-section {
       margin-top: 2rem;
     }
@@ -280,7 +285,7 @@
       var msInWeek = 1000 * 60 * 60 * 24 * 7;
       var weeksLived = Math.floor((today - birthDate) / msInWeek);
       
-      var totalWeeks = 4160;
+      var totalWeeks = 4680;
       var weeksRemaining = totalWeeks - weeksLived;
       var percentageLived = Math.round((weeksLived / totalWeeks) * 100);
       
@@ -292,6 +297,15 @@
       var breaths = Math.floor(daysLived * 24 * 60 * 16);
       var seasons = Math.floor(daysLived / 91.25);
       
+      var averageLifespanYears = 90;
+      var averageDeathDate = new Date(birthDate);
+      averageDeathDate.setFullYear(averageDeathDate.getFullYear() + averageLifespanYears);
+      
+      var timeRemaining = averageDeathDate - today;
+      var daysRemaining = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+      var hoursRemaining = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      var minutesRemaining = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+      
       return {
         weeksLived: weeksLived,
         totalWeeks: totalWeeks,
@@ -302,7 +316,10 @@
         heartbeats: heartbeats,
         breaths: breaths,
         seasons: seasons,
-        birthYear: birthYear
+        birthYear: birthYear,
+        daysRemaining: daysRemaining,
+        hoursRemaining: hoursRemaining,
+        minutesRemaining: minutesRemaining
       };
     }
 
@@ -369,8 +386,17 @@
 
     function renderStats() {
       var container = document.getElementById('statsContainer');
+      var html = '';
       
-      var html = '<div class="card">';
+      html += '<div class="card">';
+      html += '<h2>Time remaining</h2>';
+      html += '<p class="stat-text">Based on an average lifespan of 90 years (your grandparents\' age), you have approximately:</p>';
+      html += '<p class="stat-text timer-display"><span class="stat-highlight">' + formatNumber(stats.daysRemaining) + '</span> days, <span class="stat-highlight">' + stats.hoursRemaining + '</span> hours, and <span class="stat-highlight">' + stats.minutesRemaining + '</span> minutes</p>';
+      html += '<p class="stat-text">Make them count.</p>';
+      html += '<button class="btn btn-primary" onclick="refreshTimer()" style="margin-top: 1rem;">Refresh Timer</button>';
+      html += '</div>';
+      
+      html += '<div class="card">';
       html += '<h2>Life highlights</h2>';
       html += '<p class="stat-text">You\'ve lived <span class="stat-highlight">' + formatNumber(stats.weeksLived) + '</span> weeks, which is <span class="stat-highlight">' + stats.percentageLived + '%</span> of a full life.</p>';
       html += '<p class="stat-text">That\'s <span class="stat-highlight">' + formatNumber(stats.daysLived) + '</span> days of experience and approximately <span class="stat-highlight">' + formatNumber(stats.seasons) + '</span> seasons observed.</p>';
@@ -388,7 +414,7 @@
       html += '<div class="card">';
       html += '<h2>Cosmic perspective</h2>';
       html += '<p class="stat-text">Since your birth, Earth has traveled approximately <span class="stat-highlight">' + formatNumber(Math.round(stats.daysLived * 1.6 * 1000000)) + '</span> kilometers through space around the Sun.</p>';
-      html += '<p class="stat-text">The observable universe is about <span class="stat-highlight">93 billion</span> light-years across, meaning light takes <span class="stat-highlight">93 billion</span> years to cross it. Your entire lifespan is just <span class="stat-highlight">' + (80/13800000000 * 100).toFixed(10) + '%</span> of the universe\'s age.</p>';
+      html += '<p class="stat-text">The observable universe is about <span class="stat-highlight">93 billion</span> light-years across, meaning light takes <span class="stat-highlight">93 billion</span> years to cross it. Your entire lifespan is just <span class="stat-highlight">' + (90/13800000000 * 100).toFixed(10) + '%</span> of the universe\'s age.</p>';
       html += '<p class="stat-text">During your lifetime, our solar system has moved about <span class="stat-highlight">' + formatNumber(Math.round(stats.daysLived * 24 * 828000)) + '</span> kilometers through the Milky Way galaxy.</p>';
       html += '</div>';
       
@@ -421,6 +447,14 @@
       
       document.getElementById('step1').classList.remove('hidden');
       document.getElementById('step2').classList.add('hidden');
+    }
+
+    function refreshTimer() {
+      var birthdate = document.getElementById('birthdate').value;
+      if (!birthdate) return;
+      
+      stats = calculateStats(birthdate);
+      renderStats();
     }
   </script>
 </body>
